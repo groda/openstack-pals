@@ -2,7 +2,7 @@
 
 ## Description
 
-This project provides a shell script with a menu-driven interface to support common tasks using the OpenStack command-line API client. It aims to simplify and automate frequent OpenStack operations.
+This project provides a shell script with a menu-driven interface to support common tasks using the OpenStack command-line API client. It aims to simplify and automate frequent OpenStack operations, while also serving as a learning tool to deepen understanding of OpenStack and command-line scripting.
 
 ## Installation
 
