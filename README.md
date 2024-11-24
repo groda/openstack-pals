@@ -6,10 +6,6 @@ This project provides a shell script with a menu-driven interface to support com
 
 ## Installation
 
-A brief description of what your project does and its purpose. 
-
-## Installation
-
 To clone this repository and set up the project locally, follow these steps:
 
 1. Clone the repository:
