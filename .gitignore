@@ -1,0 +1,14 @@
+# ignore everything
+*
+
+# do not ignore specific folders
+!/openstack
+
+# except 
+!*.sh
+!requirements.txt
+!README.md
+
+# do not ignore .gitignore
+!.gitignore
+
