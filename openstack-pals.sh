@@ -39,13 +39,13 @@ EOM
 check_status() { [ $? -eq 0 ] && echo ✅ || { echo ❌;exit; } }
 
 # Define the file path
-PAL_FILE="$HOME/.pals"
+PALS_FILE="$HOME/.pals"
 
 # Check if the file exists
-if [[ ! -f "$PAL_FILE" ]]; then
-  echo "❀ File $PAL_FILE does not exist. Creating it with permissions 700..."
+if [[ ! -f "$PALS_FILE" ]]; then
+  echo "❀ File $PALS_FILE does not exist. Creating it with permissions 700..."
   # Create the file and add a basic YAML structure with groups and key-value pairs
-  cat <<PALS > "$PAL_FILE"
+  cat <<PALS > "$PALS_FILE"
 # pals variables
 openstack:
   username: groda
@@ -54,12 +54,16 @@ openstack:
 PALS
 
   # Set file permissions to 700
-  chmod 700 "$PAL_FILE"
+  chmod 700 "$PALS_FILE"
 
-  echo "❀ File $PAL_FILE created successfully."
+  echo "❀ File $PALS_FILE created successfully."
 else
-  echo "❀ File $PAL_FILE already exists."
+  echo "❀ File $PALS_FILE already exists."
 fi
+
+# install requirements
+echo "❀ Installing requirements ..."
+pip install -r requirements.txt -qq
 
 PALS_ENV=pals
 # activate environment
@@ -70,9 +74,6 @@ if [ ! -f "$HOME/.virtualenvs/${PALS_ENV}/bin/activate" ]; then
 fi
 
 source $HOME/.virtualenvs/${PALS_ENV}/bin/activate
-
-# install openstack client
-pip install -r requirements.txt
 
 # function for extracting value from simple YAML
 get_value() {
@@ -109,7 +110,6 @@ else if (found && $0 !~ "^[[:space:]]+")
 else if (found && $0 ~ "[[:space:]]+"ck":*")
   {
    split($0,a," ")
-   a[2]="55"
    printf "  %s %s", a[1],v
    print("")
   }
@@ -122,25 +122,33 @@ else
 }
 
 # Extract the value of username from the openstack group
-USER=$(get_value $PAL_FILE 'openstack' 'username')
-PROJ=$(get_value $PAL_FILE 'openstack' 'project')
-APP_CRED=$(get_value $PAL_FILE 'openstack' 'app_cred')
+USER=$(get_value $PALS_FILE 'openstack' 'username')
+PROJ=$(get_value $PALS_FILE 'openstack' 'project')
+APP_CRED=$(get_value $PALS_FILE 'openstack' 'app_cred')
 #often: APP_CRED=$HOME/.openstack/app-cred-${PROJ}-openrc.sh
 
-# backup
-cat $PAL_FILE >>$PAL_FILE.bak
+# smart backup of parameters (first check if they're already in the .bak file)
+BLOCK=$(<"$PALS_FILE")
+# Append or update the block in .pals
+if ! grep -Fxq "$BLOCK" "$PALS_FILE"; then
+  echo "$BLOCK" >> "$PALS_FILE"
+  echo "Block written to $PALS_FILE."
+else
+  echo "Block already exists in $PALS_FILE. No changes made."
+fi
+#cat $PALS_FILE >>$PALS_FILE.bak
 
 echo "The OpenStack username is the name used to log in to OpenStack"
 read -p "Enter your OpenStack username (enter to keep default)  [$USER]: " NEW_USER 
 if [ "$NEW_USER" != "" ];then
   USER=$NEW_USER 
-  set_value $PAL_FILE 'openstack' 'username' $USER >$PAL_FILE.tmp && mv $PAL_FILE.tmp $PAL_FILE
+  set_value $PALS_FILE 'openstack' 'username' $USER >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
 fi
 
 read -p "Enter your OpenStack project/tenant (enter to keep default)  [$PROJ]: " NEW_PROJ
 if [ "$NEW_PROJ" != "" ];then
   PROJ=$NEW_PROJ 
-  set_value $PAL_FILE 'openstack' 'project' $PROJ >$PAL_FILE.tmp && mv $PAL_FILE.tmp $PAL_FILE
+  set_value $PALS_FILE 'openstack' 'project' $PROJ >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
 fi
 
 # Prompt the user with tab-completion enabled 
@@ -151,7 +159,7 @@ if [ "$NEW_APP_CRED" != "" ];then
     NEW_APP_CRED="${NEW_APP_CRED/#\~/$HOME}"
   fi
   APP_CRED=$NEW_APP_CRED
-  set_value $PAL_FILE 'openstack' 'app_cred' $APP_CRED >$PAL_FILE.tmp && mv $PAL_FILE.tmp $PAL_FILE
+  set_value $PALS_FILE 'openstack' 'app_cred' $APP_CRED >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
 fi
 
 
