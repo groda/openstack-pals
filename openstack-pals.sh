@@ -229,11 +229,12 @@ while true; do
     echo "2. Show Info on User"
     echo "3. Show Projects I'm A Member Of"
     echo "4. Show All Instances"
-    echo "5. Show Bare Metal"
-    echo "6. Show All Images"
-    echo "7. Show All Flavors"
-    echo "8. Show Quotas"
-    echo "9. Exit"
+    echo "5. Show folating IPs"
+    echo "6. Show Bare Metal"
+    echo "7. Show All Images"
+    echo "8. Show All Flavors"
+    echo "9. Show Quotas"
+    echo "0. Exit"
     echo "------------------------------------"
     
     # Read user input
@@ -258,27 +259,31 @@ while true; do
             show_command "openstack server list -f table -c ID -c Name -c Status"
             ;;
         5)
+            echo "Show floating IPs"
+            show_command "openstack floating ip list"
+            ;;
+        6)
             echo "Show Info on Hardware:"
             show_vm_hardware
             ;;
-        6)
+        7)
             echo "Show available images"
             show_command "openstack image list"
             ;;
-        7)
+        8)
             echo "Show available flavors, sort by RAM ascending"
             show_command "openstack flavor list --sort-column RAM --sort-ascending"
             ;;
-        8)
+        9)
             echo "Show quotas for project $PROJ"
             show_command "openstack quota show"
             ;;
-        9|q)
+        0|q)
             echo "Exiting..."
             break
             ;;
         *)
-            echo "Invalid option, please choose a number between 1 and 9."
+            echo "Invalid option, please choose a number between 1 and 9 (0 or q to quit)."
             ;;
     esac
     
