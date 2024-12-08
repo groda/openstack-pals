@@ -184,7 +184,7 @@ banner() {
     echo "$edge"
 }
 
-show_command() { banner $1; $1; }
+show_command() { banner $1; $1 |less -F; }
 
 show_user_info() {
   read -p "Enter your username (enter to keep default)  [$USER]: " USER
@@ -229,12 +229,13 @@ while true; do
     echo "2. Show Info on User"
     echo "3. Show Projects I'm A Member Of"
     echo "4. Show All Instances"
-    echo "5. Show folating IPs"
-    echo "6. Show Bare Metal"
-    echo "7. Show All Images"
-    echo "8. Show All Flavors"
-    echo "9. Show Quotas"
-    echo "0. Exit"
+    echo "5. Show floating IPs"
+    echo "6. Show networks"
+    echo "7. Show Bare Metal"
+    echo "8. Show All Images"
+    echo "9. Show All Flavors"
+    echo "a. Show Quotas"
+    echo "q. Exit"
     echo "------------------------------------"
     
     # Read user input
@@ -263,27 +264,31 @@ while true; do
             show_command "openstack floating ip list"
             ;;
         6)
+            echo "Show networks"
+            show_command "openstack network list -f table -c ID -c Name"  
+            ;;
+        7)
             echo "Show Info on Hardware:"
             show_vm_hardware
             ;;
-        7)
+        8)
             echo "Show available images"
             show_command "openstack image list"
             ;;
-        8)
+        9)
             echo "Show available flavors, sort by RAM ascending"
             show_command "openstack flavor list --sort-column RAM --sort-ascending"
             ;;
-        9)
+        a) 
             echo "Show quotas for project $PROJ"
             show_command "openstack quota show"
             ;;
-        0|q)
+        q)
             echo "Exiting..."
             break
             ;;
         *)
-            echo "Invalid option, please choose a number between 1 and 9 (0 or q to quit)."
+            echo "Invalid option (q to quit)."
             ;;
     esac
     
