@@ -19,3 +19,23 @@ To clone this repository and set up the project locally, follow these steps:
 3. Show an usage message
    ```bash
    ./openstack-pals.sh -h
+
+4. Run
+   ```bash
+   ./openstack-pals.sh
+
+### Run in Docker
+
+To run in a docker container:
+
+5. Build an image
+   ```bash
+   docker build -t openstack-pals .
+
+6. Run in container
+   ```bash
+   docker run -ti --rm -v ~/.pals:/root/.pals -v ~/.openstack:/root/.openstack openstack-pals
+
+7. Optionally, create an alias
+   ```
+   alias openstack-pals="docker run -ti --rm -v ~/.pals:/root/.pals -v ~/.openstack:/root/.openstack openstack-pals"

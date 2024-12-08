@@ -8,6 +8,7 @@
 !*.sh
 !requirements.txt
 !README.md
+!Dockerfile
 
 # do not ignore .gitignore
 !.gitignore

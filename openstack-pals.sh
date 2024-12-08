@@ -170,8 +170,6 @@ unset $(env | grep "^OS" |awk -F'=' '{print $1}')
 #echo "Download your application credentials to  ~/.openstack/app-cred-${PROJ}-openrc.sh ..."
 # in Horizon: Identity/Application Credentials/ Roles: reader/member
 echo "Reading credentials file $APP_CRED ..."
-echo "-->"$APP_CRED"<--"
-#source ~/.openstack/app-cred-groda_ro-openrc.sh
 source "$APP_CRED"
 
 check_status
