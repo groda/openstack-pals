@@ -37,5 +37,10 @@ To run in a docker container:
    docker run -ti --rm -v ~/.pals:/root/.pals -v ~/.openstack:/root/.openstack openstack-pals
 
 7. Optionally, create an alias
-   ```
+   ```bash
    alias openstack-pals="docker run -ti --rm -v ~/.pals:/root/.pals -v ~/.openstack:/root/.openstack openstack-pals"
+   ```
+   
+   and run with:
+   ```bash
+   openstack-pals
