@@ -129,14 +129,22 @@ APP_CRED=$(get_value $PALS_FILE 'openstack' 'app_cred')
 
 # smart backup of parameters (first check if they're already in the .bak file)
 BLOCK=$(<"$PALS_FILE")
-# Append or update the block in .pals
-if ! grep -Fxq "$BLOCK" "$PALS_FILE"; then
-  echo "$BLOCK" >> "$PALS_FILE"
-  echo "Block written to $PALS_FILE."
+CONTENT=$(<"$PALS_FILE.bak")
+repr=${CONTENT/${BLOCK}}
+echo "CONTENT"
+echo "$CONTENT"
+echo
+echo "repr"
+echo $repr
+echo
+echo $BLOCK
+# Append the the block in .pals.bak if not already contained
+if [[ "$CONTENT" != "$repr" ]]; then 
+  echo "Block already exists in $PALS_FILE.bak. No changes made."
 else
-  echo "Block already exists in $PALS_FILE. No changes made."
+  echo "$BLOCK" >> $PALS_FILE.bak
+  echo "Block written to $PALS_FILE.bak"
 fi
-#cat $PALS_FILE >>$PALS_FILE.bak
 
 echo "The OpenStack username is the name used to log in to OpenStack"
 read -p "Enter your OpenStack username (enter to keep default)  [$USER]: " NEW_USER 
