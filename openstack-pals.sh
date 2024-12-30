@@ -131,13 +131,6 @@ APP_CRED=$(get_value $PALS_FILE 'openstack' 'app_cred')
 BLOCK=$(<"$PALS_FILE")
 CONTENT=$(<"$PALS_FILE.bak")
 repr=${CONTENT/${BLOCK}}
-echo "CONTENT"
-echo "$CONTENT"
-echo
-echo "repr"
-echo $repr
-echo
-echo $BLOCK
 # Append the the block in .pals.bak if not already contained
 if [[ "$CONTENT" != "$repr" ]]; then 
   echo "Block already exists in $PALS_FILE.bak. No changes made."
