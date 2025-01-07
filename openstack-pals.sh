@@ -185,6 +185,11 @@ banner() {
 
 show_command() { banner $1; $1 |less -F; }
 
+enter_command() {
+  read -p "Command to run [e.g. openstack project list]: " CMD
+  show_command "$CMD"
+}
+
 show_user_info() {
   read -p "Enter your username (enter to keep default)  [$USER]: " USER
   if [ "$USER" != "" ];then
@@ -234,6 +239,8 @@ while true; do
     echo "8. Show All Images"
     echo "9. Show All Flavors"
     echo "a. Show Quotas"
+    echo "x. Run Your Command"
+    echo "y. Open OpenStack Shell"
     echo "q. Exit"
     echo "------------------------------------"
     
@@ -281,6 +288,14 @@ while true; do
         a) 
             echo "Show quotas for project $PROJ"
             show_command "openstack quota show"
+            ;;
+        x)
+            echo "Run your OpenStack command"
+            enter_command 
+            ;;
+        y)
+            echo "Open the OpenStack shell"
+            openstack
             ;;
         q)
             echo "Exiting..."
