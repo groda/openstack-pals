@@ -30,7 +30,32 @@ To clone this repository and set up the project locally, follow these steps:
    ```bash
    ./openstack-pals.sh
 
-### Run in Docker
+
+## Configuration Files
+
+The script creates and manages two files in your $HOME directory to store connection parameters (such as username and project name). **These files are automatically managed by the script and do not need to be edited manually**.
+
+- `$HOME/.pals` – The main configuration file containing your connection parameters.  
+- `$HOME/.pals.bak` – A backup file that stores the history of previous configurations.
+
+These files **do not contain any passwords**. They are automatically updated by the script during execution.
+
+
+## Credentials File  
+
+The script requires a **credentials file** for establishing a connection with your OpenStack project. By default, this file should be saved under:  
+```bash
+$HOME/.openstack/app-cred-<YOUR_PROJECT>-openrc.sh
+```
+
+If your credentials file is stored elsewhere, the script will prompt you to provide its location during the **initial interactive setup**.  
+
+> [!NOTE]
+> **Note:**
+> The credentials file is not automatically created by the script. You must ensure it exists before running the script.  
+
+
+## Run in Docker
 
 To run in a docker container:
 
