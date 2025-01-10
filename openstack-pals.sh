@@ -85,8 +85,9 @@ else if (found && $0 !~ "^[[:space:]]+")
   exit 
 else if (found && $0 ~ "[[:space:]]+"ck":*") 
   {
-   split($0,a," ")
-   print(a[2])
+   # https://stackoverflow.com/a/19156442
+   st=index($0,": ")
+   print substr($0,st+2)
    exit
   }
 }
@@ -109,8 +110,7 @@ else if (found && $0 !~ "^[[:space:]]+")
   }
 else if (found && $0 ~ "[[:space:]]+"ck":*")
   {
-   split($0,a," ")
-   printf "  %s %s", a[1],v
+   printf "  %s: %s", ck,v
    print("")
   }
 else
@@ -149,7 +149,7 @@ fi
 read -p "Enter your OpenStack project/tenant (enter to keep default)  [$PROJ]: " NEW_PROJ
 if [ "$NEW_PROJ" != "" ];then
   PROJ=$NEW_PROJ 
-  set_value $PALS_FILE 'openstack' 'project' $PROJ >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
+  set_value $PALS_FILE 'openstack' 'project' "$PROJ" >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
 fi
 
 # Prompt the user with tab-completion enabled 
@@ -183,7 +183,7 @@ banner() {
     echo "$edge"
 }
 
-show_command() { banner $1; $1 |less -F; }
+show_command() { banner $1; command=($1);"${command[@]}" |less -F; }
 
 enter_command() {
   read -p "Command to run [e.g. openstack project list]: " CMD
@@ -251,7 +251,9 @@ while true; do
     case $choice in
         1)
             echo "Show info on project $PROJ:"
-            show_command "openstack project show $PROJ"
+            # show_command does not work if project name contains spaces 
+            banner openstack project show \"$PROJ\"
+            openstack project show "$PROJ"
             ;;
         2)
             echo "Show info for user"
@@ -263,7 +265,7 @@ while true; do
             ;;
         4)
             echo "List servers in project $PROJ:"
-            show_command "openstack server list -f table -c ID -c Name -c Status"
+            show_command "openstack server list -f table -c ID -c Name -c Image -c Flavor -c Status"
             ;;
         5)
             echo "Show floating IPs"
@@ -307,6 +309,6 @@ while true; do
     esac
     
     # Wait for the user to press a key before refreshing the menu
-    read -p "Press any key to return to the menu..." -n1 -s
+    read -p "Press any key to return to the menu ... " -n1 -s
 done
 
