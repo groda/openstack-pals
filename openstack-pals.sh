@@ -201,24 +201,27 @@ show_user_info() {
 
 
 show_vm_hardware() {
-  instance_list=$(openstack server list --format value --column ID --column Name --column Image)
+  instance_list=$(openstack server list --format value --column ID --column Name --column Image --column Flavor)
   
-  echo "Instance Name | Image ID | CPU Arch | Disk Bus | SCSI Model | OS Distro | OS Version"
-  echo "------------------------------------------------------------------------------------"
+  echo "Instance Name | Image ID | CPU Arch | Disk Bus | SCSI Model | OS Distro | OS Version | RAM | Disk | VCPUs"
+  echo "---------------------------------------------------------------------------------------------------------"
 
-  while IFS=" " read -r instance_id instance_name image_id; do
-    if [[ "$image_id" != "" ]]; then
+  while IFS=" " read -r instance_id instance_name image_id instance_flavor; do
+    if [[ "$image_id" != "" &&  $instance_flavor != "" ]]; then
         image_properties=$(openstack image show "$image_id" -f json | jq -r '.properties | "\(.cpu_arch) \(.hw_disk_bus) \(.hw_scsi_model) \(.os_distro) \(.os_version)"')
-
         cpu_arch=$(echo "$image_properties" | awk '{print $1}')
         hw_disk_bus=$(echo "$image_properties" | awk '{print $2}')
         hw_scsi_model=$(echo "$image_properties" | awk '{print $3}')
         os_distro=$(echo "$image_properties" | awk '{print $4}')
         os_version=$(echo "$image_properties" | awk '{print $5}')
 
-        echo "$instance_name | $image_id | $cpu_arch | $hw_disk_bus | $hw_scsi_model | $os_distro | $os_version"
+        flavor_properties=$(openstack flavor show "$instance_flavor" -f json | jq -r '"\(.ram) \(.disk) \(.vcpus)"')
+        flavor_ram=$(echo "$flavor_properties" | awk '{print $1}')
+        flavor_disk=$(echo "$flavor_properties" | awk '{print $2}')
+        flavor_vcpus=$(echo "$flavor_properties" | awk '{print $3}')
+        echo "$instance_name | $image_id | $cpu_arch | $hw_disk_bus | $hw_scsi_model | $os_distro | $os_version | $flavor_ram | $flavor_disk | $flavor_vcpus"
     else
-        echo "$instance_name |  No Image | N/A | N/A | N/A | N/A | N/A"
+        echo "$instance_name |  No Image | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A"
     fi
   done <<< "$instance_list"
 }
@@ -269,7 +272,8 @@ while true; do
             ;;
         5)
             echo "Show floating IPs"
-            show_command "openstack floating ip list"
+            banner "openstack floating ip list"
+            openstack floating ip list -c "Floating IP Address" -c "Fixed IP Address" -c Port
             ;;
         6)
             echo "Show networks"
