@@ -242,6 +242,7 @@ while true; do
     echo "8. Show All Images"
     echo "9. Show All Flavors"
     echo "a. Show Quotas"
+    echo "b. Show Current OpenStack Services"
     echo "x. Run Your Command"
     echo "y. Open OpenStack Shell"
     echo "q. Exit"
@@ -295,12 +296,18 @@ while true; do
             echo "Show quotas for project $PROJ"
             show_command "openstack quota show"
             ;;
+        b) 
+            echo "Show current OpenStack services"
+            echo "OpenStack consists of several independent parts, named the OpenStack services"
+            echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
+            show_command "openstack versions show --status CURRENT"
+            ;;
         x)
             echo "Run your OpenStack command"
             enter_command 
             ;;
         y)
-            echo "Open the OpenStack shell"
+            echo "Open the OpenStack shell (type exit to return to $(basename $0))"
             openstack
             ;;
         q)
