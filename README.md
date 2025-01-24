@@ -4,10 +4,14 @@
 
 This project provides a shell script with a menu-driven interface to support common tasks using the OpenStack command-line API client. It aims to simplify and automate frequent OpenStack operations, while also serving as a learning tool to deepen understanding of OpenStack and command-line scripting.
 
+The idea for this project came from my desire to create a shell tool to learn specific shell commands—essentially a self-evolving, learning-based personalized interactive tutorial command (in this case, I wanted to explore the `openstack` CLI command). Although I haven’t implemented that tool yet, this script emerged during the process. Another source of inspiration was the vintage IBM AIX interface for system administration, which I greatly appreciated.
+
 > [!NOTE]
 > Important Notice:
-> This application operates in **read-only mode**. It is designed as an OpenStack client for inspecting and interacting with your OpenStack environment without making any modifications to your infrastructure.
+> This application mainly operates in **read-only mode**. It is designed as an OpenStack client for inspecting and interacting with your OpenStack environment without making any modifications to your infrastructure.
 > 
+> The only way to modify your OpenStack infrastructure in this app is by opening an OpenStack shell through the "Open OpenStack Shell" menu item and typing your commands.
+>
 > The **worst-case scenario** is that the application may not function as intended due to misconfigured connections or incorrect settings. In such cases, no changes will be made to your OpenStack environment.
 
 ## Installation
