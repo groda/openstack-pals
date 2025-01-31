@@ -61,10 +61,6 @@ else
   echo "❀ File $PALS_FILE already exists."
 fi
 
-# install requirements
-echo "❀ Installing requirements ..."
-pip install -r requirements.txt -qq
-
 PALS_ENV=pals
 # activate environment
 # Note: it's assumed that the virtual environment ~/.virtualenvs/${PALS_ENV} exists in the home-directory
@@ -74,6 +70,10 @@ if [ ! -f "$HOME/.virtualenvs/${PALS_ENV}/bin/activate" ]; then
 fi
 
 source $HOME/.virtualenvs/${PALS_ENV}/bin/activate
+
+# install requirements
+echo "❀ Installing requirements ..."
+pip install -r requirements.txt -qq
 
 # function for extracting value from simple YAML
 get_value() {
@@ -241,8 +241,9 @@ while true; do
     echo "7. Show Bare Metal"
     echo "8. Show All Images"
     echo "9. Show All Flavors"
-    echo "a. Show Quotas"
-    echo "b. Show Current OpenStack Services"
+    echo "a. Show Shares"
+    echo "b. Show Quotas"
+    echo "c. Show Current OpenStack Services"
     echo "x. Run Your Command"
     echo "y. Open OpenStack Shell"
     echo "q. Exit"
@@ -293,10 +294,14 @@ while true; do
             show_command "openstack flavor list --sort-column RAM --sort-ascending"
             ;;
         a) 
+            echo "Show shares"
+            show_command "openstack share list"
+            ;;
+        b) 
             echo "Show quotas for project $PROJ"
             show_command "openstack quota show"
             ;;
-        b) 
+        c) 
             echo "Show current OpenStack services"
             echo "OpenStack consists of several independent parts, named the OpenStack services"
             echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
