@@ -71,6 +71,9 @@ To run in a docker container:
    ```bash
    docker run -ti --rm -v ~/.pals:/root/.pals -v ~/.openstack:/root/.openstack openstack-pals
 
+   **Note:** this assumes that your credentials file is saved under ~/.openstack/app-cred-<YOUR_PROJECT>-openrc.sh 
+   (inside the container /root/.openstack/app-cred-<YOUR_PROJECT>-openrc.sh)
+
 7. Optionally, create an alias
    ```bash
    alias openstack-pals="docker run -ti --rm -v ~/.pals:/root/.pals -v ~/.openstack:/root/.openstack openstack-pals"

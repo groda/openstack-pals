@@ -48,9 +48,10 @@ if [[ ! -f "$PALS_FILE" ]]; then
   cat <<PALS > "$PALS_FILE"
 # pals variables
 openstack:
-  username: groda
-  project:
-  app_cred:
+  id: myid
+  username: myusername
+  project: myproject
+  app_cred: /path/app-cred-myproject-openrc.sh
 PALS
 
   # Set file permissions to 700
@@ -122,6 +123,7 @@ else
 }
 
 # Extract the value of username from the openstack group
+ID=$(get_value $PALS_FILE 'openstack' 'id')
 USER=$(get_value $PALS_FILE 'openstack' 'username')
 PROJ=$(get_value $PALS_FILE 'openstack' 'project')
 APP_CRED=$(get_value $PALS_FILE 'openstack' 'app_cred')
@@ -132,15 +134,39 @@ BLOCK=$(<"$PALS_FILE")
 CONTENT=$(<"$PALS_FILE.bak")
 repr=${CONTENT/${BLOCK}}
 # Append the the block in .pals.bak if not already contained
-if [[ "$CONTENT" != "$repr" ]]; then 
+if [[ "BLOCK" =~ "$repr" ]]; then
   echo "Block already exists in $PALS_FILE.bak. No changes made."
 else
   echo "$BLOCK" >> $PALS_FILE.bak
   echo "Block written to $PALS_FILE.bak"
 fi
 
+RANDOM_STR=$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 16)
+echo "The unique identifier for your OpenStack project is set by you and will only just used by openstack-pals."
+read -p "Please enter a unique identifier (enter to keep default) [$ID]: " NEW_ID
+if [ "$NEW_ID" != "" ];then
+  ID=$NEW_ID
+  #set_value $PALS_FILE 'openstack' 'id' $ID >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
+  # look for $NEW_ID in $PALS_FILE.bak
+  PATTERN="""openstack:                                              
+  id: $NEW_ID"""
+  LINE_NR=$(grep -n "$PATTERN" $PALS_FILE.bak | tail -n 1 | cut -d: -f1)
+  if [ -z "$LINE_NR" ]; then
+    echo "ID '$NEW_ID' not found."
+  else
+    echo "ID '$NEW_ID' found."
+    BLOCK_LENGTH=3
+    END_LINE=$((LINE_NR + BLOCK_LENGTH))
+    sed -n "$((LINE_NR -2)),${END_LINE}p" $PALS_FILE.bak>$PALS_FILE 
+    # fill other variables
+    USER=$(get_value $PALS_FILE 'openstack' 'username')
+    PROJ=$(get_value $PALS_FILE 'openstack' 'project')
+    APP_CRED=$(get_value $PALS_FILE 'openstack' 'app_cred')
+  fi
+fi
+
 echo "The OpenStack username is the name used to log in to OpenStack"
-read -p "Enter your OpenStack username (enter to keep default)  [$USER]: " NEW_USER 
+read -p "Enter your OpenStack username (enter to keep default) [$USER]: " NEW_USER 
 if [ "$NEW_USER" != "" ];then
   USER=$NEW_USER 
   set_value $PALS_FILE 'openstack' 'username' $USER >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
@@ -228,9 +254,10 @@ show_vm_hardware() {
 
 # Display the menu and handle choices
 while true; do
+    # uncomment next line to debug
     clear
     echo "❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀"
-    echo "  The Open Stack Personal Automation and Launch Suite  "
+    echo "❀ The Open Stack Personal Automation and Launch Suite ❀"
     echo "❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀"
     echo "1. Show Info on Project"
     echo "2. Show Info on User"
