@@ -2,7 +2,30 @@
 
 ## Description
 
-This project provides a shell script with a menu-driven interface to support common tasks using the OpenStack command-line API client. It aims to simplify and automate frequent OpenStack operations, while also serving as a learning tool to deepen understanding of OpenStack and command-line scripting.
+This project provides a shell script with a menu-driven interface to simplify common OpenStack operations—such as displaying project details, listing images, and managing flavors—through the OpenStack command-line client. It streamlines frequent administrative tasks while serving as a practical tool for learning OpenStack concepts and command-line scripting.
+
+```
+❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀
+❀ The Open Stack Personal Automation and Launch Suite ❀
+❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀
+1. Show Info on Project
+2. Show Info on User
+3. Show Projects I'm A Member Of
+4. Show All Instances
+5. Show floating IPs
+6. Show networks
+7. Show Bare Metal
+8. Show All Images
+9. Show All Flavors
+a. Show Shares
+b. Show Quotas
+c. Show Current OpenStack Services
+x. Run Your Command
+y. Open OpenStack Shell
+q. Exit
+------------------------------------
+Enter your choice [1-9]: 
+```
 
 The idea for this project came from my desire to create a shell tool to learn specific shell commands—essentially a self-evolving, learning-based personalized interactive tutorial command (in this case, I wanted to explore the `openstack` CLI command). Although I haven’t implemented that tool yet, this script emerged during the process. Another source of inspiration was the vintage IBM AIX interface for system administration, which I greatly appreciated.
 
