@@ -1,3 +1,2 @@
-virtualenv
 python-openstackclient
 python-manilaclient

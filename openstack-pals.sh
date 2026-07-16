@@ -15,20 +15,18 @@ This is an interactive menu suite designed to help you efficiently perform commo
 
 Before accessing the main menu, you will be guided through an interactive dialogue to input your OpenStack connection details.
 You will need to provide the following information:
- ➤ your OpenStack username
- ➤ your OpenStack project (also called "tenant") name
- ➤ The path to your application credential file.
+ ➤ The path to your clouds.yaml file containing application credentials.
    This file can be downloaded from the Horizon Web UI under: Identity → Application Credentials
    Ensure that the roles selected include Reader or Member.
-   The file is typically saved in: ~/.openstack/app-cred-<proj_name>-openrc.sh
+ ➤ your OpenStack project (it is one of the "clouds" in clouds.yml)
 
 ~ ❀ ~
 
 Key features:
-➤ Settings Persistence: Your last settings (username, project, and credentials file) are saved in ~/.pals, so you won’t need to re-enter them each time.
-➤ When specifying the credentials file path, you can use tab autocompletion and the ~ shortcut for your home directory. 
 ➤ Automatic Virtual Environment Creation: a virtual environment named $HOME/.virtualenvs/pals will be automatically created if it doesn't already exist.
 ➤ OpenStack Python Client Installation: if the OpenStack Python client is not already installed, it will be automatically installed within the virtual environmen.
+➤ When specifying the clouds.yaml file path, you can use tab autocompletion and the ~ shortcut for your home directory. 
+➤ Viewing the commands to be executed helps you memorize them. 
 EOM
     exit 0
 }
@@ -38,168 +36,79 @@ EOM
 
 check_status() { [ $? -eq 0 ] && echo ✅ || { echo ❌;exit; } }
 
-# Define the file path
-PALS_FILE="$HOME/.pals"
 
-# Check if the file exists
-if [[ ! -f "$PALS_FILE" ]]; then
-  echo "❀ File $PALS_FILE does not exist. Creating it with permissions 700..."
-  # Create the file and add a basic YAML structure with groups and key-value pairs
-  cat <<PALS > "$PALS_FILE"
-# pals variables
-openstack:
-  id: myid
-  username: myusername
-  project: myproject
-  app_cred: /path/app-cred-myproject-openrc.sh
-PALS
-
-  # Set file permissions to 700
-  chmod 700 "$PALS_FILE"
-
-  echo "❀ File $PALS_FILE created successfully."
-else
-  echo "❀ File $PALS_FILE already exists."
-fi
-
+echo "❀ Creating environment ..."
 PALS_ENV=pals
-# activate environment
-# Note: it's assumed that the virtual environment ~/.virtualenvs/${PALS_ENV} exists in the home-directory
-if [ ! -f "$HOME/.virtualenvs/${PALS_ENV}/bin/activate" ]; then
-  echo "Create new environment ${PALS_ENV}"
-  virtualenv $HOME/.virtualenvs/${PALS_ENV}
+VENV_PATH="$HOME/.virtualenvs/${PALS_ENV}"
+
+# Create the virtual environment if it doesn't exist
+if [ ! -d "${VENV_PATH}" ] || [ ! -f "${VENV_PATH}/bin/activate" ]; then
+    echo "Creating new environment ${PALS_ENV}..."
+    uv venv "${VENV_PATH}" --python 3.11   # or 3.12
 fi
 
-source $HOME/.virtualenvs/${PALS_ENV}/bin/activate
+# Activate it
+source "${VENV_PATH}/bin/activate"
 
-# install requirements
+# Install requirements
 echo "❀ Installing requirements ..."
-pip install -r requirements.txt -qq
+uv pip install -r requirements.txt -q
 
-# function for extracting value from simple YAML
-get_value() {
-awk -v pk="$2" -v ck="$3" -F'\n' '
-{
-if($0==pk":") 
-  found=1 
-else if (found && $0 !~ "^[[:space:]]+") 
-  exit 
-else if (found && $0 ~ "[[:space:]]+"ck":*") 
-  {
-   # https://stackoverflow.com/a/19156442
-   st=index($0,": ")
-   print substr($0,st+2)
-   exit
-  }
-}
-' $1
-}
+# Check if openstack command is available
+if ! command -v openstack >/dev/null 2>&1; then
+    echo "❌ Error: 'openstack' command not found after installation."
+    echo "Please check the requirements.txt or try reinstalling with:"
+    echo "   uv pip install --force-reinstall python-openstackclient"
+    exit 1
+fi
 
-# function for setting value from simple YAML
-set_value() {
-awk -v pk="$2" -v ck="$3" -v v="$4" -F'\n' '
-{
-if($0==pk":")
-  {
-   found=1
-   print $0
-  }
-else if (found && $0 !~ "^[[:space:]]+")
-  {
-   found=0
-   print $0
-  }
-else if (found && $0 ~ "[[:space:]]+"ck":*")
-  {
-   printf "  %s: %s", ck,v
-   print("")
-  }
+echo "✅ Environment activated and ready!"
+#which openstack || echo "openstack command not found"
+
+# Prompt user for clouds.yaml location with tab completion
+CLOUDS_YAML=./clouds.yaml
+read -e -p "Enter the location of your clouds.yaml file (enter to keep default) [$CLOUDS_YAML]: " NEW_CLOUDS_YAML
+
+if [ "$NEW_CLOUDS_YAML" != "" ]; then
+    # Safely expand tilde (~)
+    if [[ "$NEW_CLOUDS_YAML" == ~* ]]; then
+        NEW_CLOUDS_YAML="${NEW_CLOUDS_YAML/#\~/$HOME}"
+    fi
+    CLOUDS_YAML=$NEW_CLOUDS_YAML
+fi
+
+# Check if file exists
+if [ ! -f "$CLOUDS_YAML" ]; then
+    echo "❌ Error: clouds.yaml file not found at $CLOUDS_YAML"
+    return 1  # or exit 1 if in a script
+fi
+
+echo "✅ Using clouds.yaml: $CLOUDS_YAML"
+
+
+# Extract cloud names from clouds.yaml using yq
+# Extract cloud names as array (works on older bash)
+CLOUDS_LIST=($(yq e '.clouds | keys | .[]' "$CLOUDS_YAML" 2>/dev/null))
+
+if [ ${#CLOUDS_LIST[@]} -eq 0 ]; then
+    echo "❌ No clouds found or yq not available"
 else
-  {
-   print $0
-  }
-}
-' $1
-}
-
-# Extract the value of username from the openstack group
-ID=$(get_value $PALS_FILE 'openstack' 'id')
-USER=$(get_value $PALS_FILE 'openstack' 'username')
-PROJ=$(get_value $PALS_FILE 'openstack' 'project')
-APP_CRED=$(get_value $PALS_FILE 'openstack' 'app_cred')
-#often: APP_CRED=$HOME/.openstack/app-cred-${PROJ}-openrc.sh
-
-# smart backup of parameters (first check if they're already in the .bak file)
-BLOCK=$(<"$PALS_FILE")
-CONTENT=$(<"$PALS_FILE.bak")
-repr=${CONTENT/${BLOCK}}
-# Append the the block in .pals.bak if not already contained
-if [[ "BLOCK" =~ "$repr" ]]; then
-  echo "Block already exists in $PALS_FILE.bak. No changes made."
-else
-  echo "$BLOCK" >> $PALS_FILE.bak
-  echo "Block written to $PALS_FILE.bak"
+    echo "Available clouds: ${CLOUDS_LIST[*]}"
 fi
-
-RANDOM_STR=$(head /dev/urandom | LC_CTYPE=C tr -dc A-Za-z0-9 | head -c 16)
-echo "The unique identifier for your OpenStack project is set by you and will only just used by openstack-pals."
-read -p "Please enter a unique identifier (enter to keep default) [$ID]: " NEW_ID
-if [ "$NEW_ID" != "" ];then
-  ID=$NEW_ID
-  #set_value $PALS_FILE 'openstack' 'id' $ID >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
-  # look for $NEW_ID in $PALS_FILE.bak
-  PATTERN="""openstack:                                              
-  id: $NEW_ID"""
-  LINE_NR=$(grep -n "$PATTERN" $PALS_FILE.bak | tail -n 1 | cut -d: -f1)
-  if [ -z "$LINE_NR" ]; then
-    echo "ID '$NEW_ID' not found."
-  else
-    echo "ID '$NEW_ID' found."
-    BLOCK_LENGTH=3
-    END_LINE=$((LINE_NR + BLOCK_LENGTH))
-    sed -n "$((LINE_NR -2)),${END_LINE}p" $PALS_FILE.bak>$PALS_FILE 
-    # fill other variables
-    USER=$(get_value $PALS_FILE 'openstack' 'username')
-    PROJ=$(get_value $PALS_FILE 'openstack' 'project')
-    APP_CRED=$(get_value $PALS_FILE 'openstack' 'app_cred')
-  fi
-fi
-
-echo "The OpenStack username is the name used to log in to OpenStack"
-read -p "Enter your OpenStack username (enter to keep default) [$USER]: " NEW_USER 
-if [ "$NEW_USER" != "" ];then
-  USER=$NEW_USER 
-  set_value $PALS_FILE 'openstack' 'username' $USER >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
-fi
-
-read -p "Enter your OpenStack project/tenant (enter to keep default)  [$PROJ]: " NEW_PROJ
-if [ "$NEW_PROJ" != "" ];then
-  PROJ=$NEW_PROJ 
-  set_value $PALS_FILE 'openstack' 'project' "$PROJ" >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
-fi
-
-# Prompt the user with tab-completion enabled 
-read -e -p "Enter the location of your application credentials file (enter to keep default)  [$APP_CRED]: " NEW_APP_CRED
-if [ "$NEW_APP_CRED" != "" ];then
-  # Safely expand tilde (~) using parameter expansion
-  if [[ "$NEW_APP_CRED" == ~* ]]; then
-    NEW_APP_CRED="${NEW_APP_CRED/#\~/$HOME}"
-  fi
-  APP_CRED=$NEW_APP_CRED
-  set_value $PALS_FILE 'openstack' 'app_cred' $APP_CRED >$PALS_FILE.tmp && mv $PALS_FILE.tmp $PALS_FILE
-fi
-
 
 # unset all "OS*" variables
 unset $(env | grep "^OS" |awk -F'=' '{print $1}')
 
-# application credential file should be located in ~/.openstack/
-#echo "Download your application credentials to  ~/.openstack/app-cred-${PROJ}-openrc.sh ..."
-# in Horizon: Identity/Application Credentials/ Roles: reader/member
-echo "Reading credentials file $APP_CRED ..."
-source "$APP_CRED"
+export OS_CLOUD=${CLOUDS_LIST[0]}
+read -p "Enter your OpenStack cloud (enter to keep default)  [$OS_CLOUD]: " NEW_PROJ
+if [ "$NEW_PROJ" != "" ];then
+  export OS_CLOUD=$NEW_PROJ
+fi
 
-check_status
+
+PROJECT_ID=$(openstack token issue -f value -c project_id 2>/dev/null)
+echo "Project ID from token: $PROJECT_ID"
+
 
 banner() {
     msg="❀ $* ❀"
@@ -214,15 +123,6 @@ show_command() { banner $1; command=($1);"${command[@]}" |less -F; }
 enter_command() {
   read -p "Command to run [e.g. openstack project list]: " CMD
   show_command "$CMD"
-}
-
-show_user_info() {
-  read -p "Enter your username (enter to keep default)  [$USER]: " USER
-  if [ "$USER" != "" ];then
-    openstack user show $USER
-  else 
-    openstack user show $PROJ
-  fi
 }
 
 
@@ -260,19 +160,18 @@ while true; do
     echo "❀ The Open Stack Personal Automation and Launch Suite ❀"
     echo "❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀"
     echo "1. Show Info on Project"
-    echo "2. Show Info on User"
-    echo "3. Show Projects I'm A Member Of"
-    echo "4. Show All Instances"
-    echo "5. Show floating IPs"
-    echo "6. Show networks"
-    echo "7. Show Bare Metal"
-    echo "8. Show All Images"
-    echo "9. Show All Flavors"
-    echo "a. Show Shares"
-    echo "b. Show Quotas"
-    echo "c. Show Current OpenStack Services"
-    echo "x. Run Your Command"
-    echo "y. Open OpenStack Shell"
+    echo "2. Show Projects I'm A Member Of"
+    echo "3. Show All Instances"
+    echo "4. Show floating IPs"
+    echo "5. Show networks"
+    echo "6. Show Bare Metal"
+    echo "7. Show All Images"
+    echo "8. Show All Flavors"
+    echo "9. Show Shares"
+    echo "a. Show Quotas"
+    echo "b. Show Current OpenStack Services"
+    echo "c. Run Your Command"
+    echo "s. Open OpenStack Shell"
     echo "q. Exit"
     echo "------------------------------------"
     
@@ -284,61 +183,57 @@ while true; do
         1)
             echo "Show info on project $PROJ:"
             # show_command does not work if project name contains spaces 
-            banner openstack project show \"$PROJ\"
-            openstack project show "$PROJ"
+            banner openstack project show \"$PROJECT_ID\"
+            openstack project show "$PROJECT_ID"
             ;;
         2)
-            echo "Show info for user"
-            show_user_info
-            ;;
-        3)
             echo "Show all projects I'm a member of"
             show_command "openstack project list"
             ;;
-        4)
+        3)
             echo "List servers in project $PROJ:"
             show_command "openstack server list -f table -c ID -c Name -c Image -c Flavor -c Status"
             ;;
-        5)
+        4)
             echo "Show floating IPs"
             banner "openstack floating ip list"
             openstack floating ip list -c "Floating IP Address" -c "Fixed IP Address" -c Port
             ;;
-        6)
+        5)
             echo "Show networks"
             show_command "openstack network list -f table -c ID -c Name"  
             ;;
-        7)
+        6)
             echo "Show Info on Hardware:"
             show_vm_hardware
             ;;
-        8)
+        7)
             echo "Show available images"
             show_command "openstack image list"
             ;;
-        9)
+        8)
             echo "Show available flavors, sort by RAM ascending"
             show_command "openstack flavor list --sort-column RAM --sort-ascending"
             ;;
-        a) 
+        9) 
             echo "Show shares"
             show_command "openstack share list"
             ;;
-        b) 
+        a) 
             echo "Show quotas for project $PROJ"
             show_command "openstack quota show"
             ;;
-        c) 
+        b) 
             echo "Show current OpenStack services"
             echo "OpenStack consists of several independent parts, named the OpenStack services"
             echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
             show_command "openstack versions show --status CURRENT"
             ;;
-        x)
+        c)
             echo "Run your OpenStack command"
             enter_command 
             ;;
-        y)
+        s)
             echo "Open the OpenStack shell (type exit to return to $(basename $0))"
             openstack
             ;;

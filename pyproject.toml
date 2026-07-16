@@ -1,0 +1,10 @@
+[project]
+name = "openstack-pals"
+version = "0.1.0"
+description = "OpenStack Personal Automation and Launch Suite"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "python-manilaclient>=5.5.0",
+    "python-openstackclient>=8.0.0",
+]

@@ -27,19 +27,35 @@ q. Exit
 Enter your choice [1-9]: 
 ```
 
-The idea for this project came from my desire to create a shell tool to learn specific shell commands—essentially a self-evolving, learning-based personalized interactive tutorial command (in this case, I wanted to explore the `openstack` CLI command). Although I haven’t implemented that tool yet, this script emerged during the process. Another source of inspiration was the vintage IBM AIX interface for system administration, which I greatly appreciated.
+The idea for this project came from my desire to create a shell tool to learn specific shell commands—essentially a self-evolving, learning-based personalized interactive tutorial command (in this case, I wanted to explore the `openstack` CLI command). Although I haven’t implemented that tool yet, this script emerged during the process. Another source of inspiration was the vintage IBM AIX interface for system administration, which I greatly appreciated back in the day.
 
 > [!NOTE]
 > Important Notice:
 > This application mainly operates in **read-only mode**. It is designed as an OpenStack client for inspecting and interacting with your OpenStack environment without making any modifications to your infrastructure.
 > 
-> The only way to modify your OpenStack infrastructure in this app is by opening an OpenStack shell through the "Open OpenStack Shell" menu item and typing your commands.
->
-> The **worst-case scenario** is that the application may not function as intended due to misconfigured connections or incorrect settings. In such cases, no changes will be made to your OpenStack environment.
+> The only way to modify your OpenStack infrastructure through this app is by opening an OpenStack shell through the "Open OpenStack Shell" menu item and typing your commands.
 
 ## Installation
 
 To clone this repository and set up the project locally, follow these steps:
+
+### Prerequisites
+
+- **uv** (required) - Fast Python package manager  
+  Install with:
+   ```bash
+   # macOS / Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+   Note: Restart your terminal or run source $HOME/.cargo/env` to finalize the installation.
+
+- **yq**
+   ```bash
+    brew install yq          # macOS
+    # or
+    sudo apt install yq      # Linux
+    ```
+### Download
 
 1. Clone the repository:
    ```bash
@@ -49,30 +65,22 @@ To clone this repository and set up the project locally, follow these steps:
    ```bash
    cd openstack-pals
 
+### Run
+Run with
+   ```bash
+   ./openstack-pals.sh
+
 3. Show an usage message
    ```bash
    ./openstack-pals.sh -h
 
-4. Run
-   ```bash
-   ./openstack-pals.sh
-
-
-## Configuration Files
-
-The script creates and manages two files in your $HOME directory to store connection parameters (such as username and project name). **These files are automatically managed by the script and do not need to be edited manually**.
-
-- `$HOME/.pals` – The main configuration file containing your connection parameters.  
-- `$HOME/.pals.bak` – A backup file that stores the history of previous configurations.
-
-These files **do not contain any passwords**. They are automatically updated by the script during execution.
 
 
 ## Credentials File  
 
-The script requires a **credentials file** for establishing a connection with your OpenStack project. By default, this file should be saved under:  
+The script requires a **credentials file** for establishing a connection with your OpenStack projecty,by default   
 ```bash
-$HOME/.openstack/app-cred-<YOUR_PROJECT>-openrc.sh
+./clouds.yaml
 ```
 
 If your credentials file is stored elsewhere, the script will prompt you to provide its location during the **initial interactive setup**.  
