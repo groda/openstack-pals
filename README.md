@@ -65,18 +65,7 @@ To clone this repository and set up the project locally, follow these steps:
    ```bash
    cd openstack-pals
 
-### Run
-Run with
-   ```bash
-   ./openstack-pals.sh
-
-3. Show an usage message
-   ```bash
-   ./openstack-pals.sh -h
-
-
-
-## Credentials File  
+### Credentials File  
 
 The script requires a **credentials file** for establishing a connection with your OpenStack projecty,by default   
 ```bash
@@ -85,9 +74,18 @@ The script requires a **credentials file** for establishing a connection with yo
 
 If your credentials file is stored elsewhere, the script will prompt you to provide its location during the **initial interactive setup**.  
 
-> [!NOTE]
-> **Note:**
-> The credentials file is not automatically created by the script. You must ensure it exists before running the script.  
+### Run
+
+Run with
+   ```bash
+   ./openstack-pals.sh
+   ```
+
+### Show an usage message
+
+   ```bash
+   ./openstack-pals.sh -h
+   ```
 
 
 ## Run in Docker
