@@ -67,10 +67,12 @@ To clone this repository and set up the project locally, follow these steps:
 
 ### Credentials File  
 
-The script requires a **credentials file** for establishing a connection with your OpenStack projecty,by default   
+The script requires a **credentials file** for establishing a connection with your OpenStack projecty, by default   
 ```bash
 ./clouds.yaml
 ```
+
+The repository includes a sample credentials file `sample_clouds.yaml` with credentials for two different clouds as a reference.
 
 If your credentials file is stored elsewhere, the script will prompt you to provide its location during the **initial interactive setup**.  
 
