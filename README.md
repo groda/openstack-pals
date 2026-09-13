@@ -60,9 +60,10 @@ To clone this repository and set up the project locally, follow these steps:
    The `mapfile` command is only available starting from `bash` version 4. Since on macOS has by defult `bash 3`,
    you might need to instal it with
    ```bash
-    export HOMEBREW_NO_AUTO_UPDATE=1 # preventing brew from auto-upgrading
-    brew install bash         
-    ```
+   # macOS
+   export HOMEBREW_NO_AUTO_UPDATE=1 # prevent brew from auto-upgrading
+   brew install bash         
+   ```
     (this will install the latest version of `bash`)
 
 ### Download
