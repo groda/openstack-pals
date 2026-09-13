@@ -88,7 +88,19 @@ echo "✅ Using clouds.yaml: $CLOUDS_YAML"
 
 # Extract cloud names from clouds.yaml using yq
 # Extract cloud names as array (works on older bash)
-CLOUDS_LIST=($(yq e '.clouds | keys | .[]' "$CLOUDS_YAML" 2>/dev/null))
+if yq --version 2>&1 | grep -q 'mikefarah/yq'; then
+    # Mike Farah yq v4
+    mapfile -t CLOUDS_LIST < <(
+        yq e '.clouds | keys | .[]' "$CLOUDS_YAML"
+    )
+else
+    # Python yq
+    mapfile -t CLOUDS_LIST < <(
+        yq '.clouds | keys | .[]' "$CLOUDS_YAML"
+    )
+fi
+
+#CLOUDS_LIST=($(yq e '.clouds | keys | .[]' "$CLOUDS_YAML" 2>/dev/null))
 
 if [ ${#CLOUDS_LIST[@]} -eq 0 ]; then
     echo "❌ No clouds found or yq not available"
@@ -164,14 +176,15 @@ while true; do
     echo "3. Show All Instances"
     echo "4. Show floating IPs"
     echo "5. Show networks"
-    echo "6. Show Bare Metal"
-    echo "7. Show All Images"
-    echo "8. Show All Flavors"
-    echo "9. Show Shares"
-    echo "a. Show Quotas"
-    echo "b. Show Current OpenStack Services"
+    echo "6. Show public networks"
+    echo "7. Show Bare Metal"
+    echo "8. Show All Images"
+    echo "9. Show All Flavors"
+    echo "a. Show Shares"
+    echo "b. Show Quotas"
     echo "c. Run Your Command"
     echo "s. Open OpenStack Shell"
+    echo "o. Show Current OpenStack Services"
     echo "q. Exit"
     echo "------------------------------------"
     
@@ -204,30 +217,28 @@ while true; do
             show_command "openstack network list -f table -c ID -c Name"  
             ;;
         6)
+            echo "Show public networks"
+            show_command "openstack network list --external"  
+            ;;
+        7)
             echo "Show Info on Hardware:"
             show_vm_hardware
             ;;
-        7)
+        8)
             echo "Show available images"
             show_command "openstack image list"
             ;;
-        8)
+        9)
             echo "Show available flavors, sort by RAM ascending"
             show_command "openstack flavor list --sort-column RAM --sort-ascending"
             ;;
-        9) 
+        a) 
             echo "Show shares"
             show_command "openstack share list"
             ;;
-        a) 
+        b) 
             echo "Show quotas for project $PROJ"
             show_command "openstack quota show"
-            ;;
-        b) 
-            echo "Show current OpenStack services"
-            echo "OpenStack consists of several independent parts, named the OpenStack services"
-            echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
-            show_command "openstack versions show --status CURRENT"
             ;;
         c)
             echo "Run your OpenStack command"
@@ -236,6 +247,12 @@ while true; do
         s)
             echo "Open the OpenStack shell (type exit to return to $(basename $0))"
             openstack
+            ;;
+        o) 
+            echo "Show current OpenStack services"
+            echo "OpenStack consists of several independent parts, named the OpenStack services"
+            echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
+            show_command "openstack versions show --status CURRENT"
             ;;
         q)
             echo "Exiting..."
