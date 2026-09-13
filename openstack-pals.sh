@@ -24,9 +24,9 @@ You will need to provide the following information:
 
 Key features:
 ➤ Automatic Virtual Environment Creation: a virtual environment named $HOME/.virtualenvs/pals will be automatically created if it doesn't already exist.
-➤ OpenStack Python Client Installation: if the OpenStack Python client is not already installed, it will be automatically installed within the virtual environmen.
-➤ When specifying the clouds.yaml file path, you can use tab autocompletion and the ~ shortcut for your home directory. 
-➤ Viewing the commands to be executed helps you memorize them. 
+➤ OpenStack Python Client Installation: if the OpenStack Python client is not already installed, it will be automatically installed within the virtual environment.
+➤ When specifying the clouds.yaml file path, you can use tab autocompletion and the ~ shortcut for your home directory.
+➤ Viewing the commands to be executed helps you memorize them.
 EOM
     exit 0
 }
@@ -34,7 +34,9 @@ EOM
 # any option will do for getting help
 [ $# -gt 0 ] && { usage; }
 
-check_status() { [ $? -eq 0 ] && echo ✅ || { echo ❌;exit; } }
+check_status() {
+    [ $? -eq 0 ] && echo ✅ || { echo ❌; exit; }
+}
 
 
 echo "❀ Creating environment ..."
@@ -44,7 +46,7 @@ VENV_PATH="$HOME/.virtualenvs/${PALS_ENV}"
 # Create the virtual environment if it doesn't exist
 if [ ! -d "${VENV_PATH}" ] || [ ! -f "${VENV_PATH}/bin/activate" ]; then
     echo "Creating new environment ${PALS_ENV}..."
-    uv venv "${VENV_PATH}" --python 3.11   # or 3.12
+    uv venv "${VENV_PATH}" --python 3.11
 fi
 
 # Activate it
@@ -63,7 +65,6 @@ if ! command -v openstack >/dev/null 2>&1; then
 fi
 
 echo "✅ Environment activated and ready!"
-#which openstack || echo "openstack command not found"
 
 # Prompt user for clouds.yaml location with tab completion
 CLOUDS_YAML=./clouds.yaml
@@ -80,14 +81,14 @@ fi
 # Check if file exists
 if [ ! -f "$CLOUDS_YAML" ]; then
     echo "❌ Error: clouds.yaml file not found at $CLOUDS_YAML"
-    return 1  # or exit 1 if in a script
+    exit 1
 fi
 
 echo "✅ Using clouds.yaml: $CLOUDS_YAML"
 
 
 # Extract cloud names from clouds.yaml using yq
-# Extract cloud names as array (works on older bash)
+# Extract cloud names as array (works on older Bash)
 if yq --version 2>&1 | grep -q 'mikefarah/yq'; then
     # Mike Farah yq v4
     mapfile -t CLOUDS_LIST < <(
@@ -100,23 +101,23 @@ else
     )
 fi
 
-#CLOUDS_LIST=($(yq e '.clouds | keys | .[]' "$CLOUDS_YAML" 2>/dev/null))
-
 if [ ${#CLOUDS_LIST[@]} -eq 0 ]; then
     echo "❌ No clouds found or yq not available"
+    exit 1
 else
     echo "Available clouds: ${CLOUDS_LIST[*]}"
 fi
 
 # unset all "OS*" variables
-unset $(env | grep "^OS" |awk -F'=' '{print $1}')
+unset $(env | grep "^OS" | awk -F'=' '{print $1}')
 
 export OS_CLOUD=${CLOUDS_LIST[0]}
-read -p "Enter your OpenStack cloud (enter to keep default)  [$OS_CLOUD]: " NEW_PROJ
-if [ "$NEW_PROJ" != "" ];then
-  export OS_CLOUD=$NEW_PROJ
-fi
 
+read -p "Enter your OpenStack cloud (enter to keep default) [$OS_CLOUD]: " NEW_PROJ
+
+if [ "$NEW_PROJ" != "" ]; then
+    export OS_CLOUD=$NEW_PROJ
+fi
 
 PROJECT_ID=$(openstack token issue -f value -c project_id 2>/dev/null)
 echo "Project ID from token: $PROJECT_ID"
@@ -130,44 +131,52 @@ banner() {
     echo "$edge"
 }
 
-show_command() { banner $1; command=($1);"${command[@]}" |less -F; }
+show_command() {
+    banner "$1"
+    read -ra command <<< "$1"
+    "${command[@]}" | less -F
+}
 
 enter_command() {
-  read -p "Command to run [e.g. openstack project list]: " CMD
-  show_command "$CMD"
+    read -e -p "Command to run [e.g. openstack project list]: " CMD
+    show_command "$CMD"
 }
 
 
 show_vm_hardware() {
-  instance_list=$(openstack server list --format value --column ID --column Name --column Image --column Flavor)
-  
-  echo "Instance Name | Image ID | CPU Arch | Disk Bus | SCSI Model | OS Distro | OS Version | RAM | Disk | VCPUs"
-  echo "---------------------------------------------------------------------------------------------------------"
+    instance_list=$(openstack server list --format value --column ID --column Name --column Image --column Flavor)
 
-  while IFS=" " read -r instance_id instance_name image_id instance_flavor; do
-    if [[ "$image_id" != "" &&  $instance_flavor != "" ]]; then
-        image_properties=$(openstack image show "$image_id" -f json | jq -r '.properties | "\(.cpu_arch) \(.hw_disk_bus) \(.hw_scsi_model) \(.os_distro) \(.os_version)"')
-        cpu_arch=$(echo "$image_properties" | awk '{print $1}')
-        hw_disk_bus=$(echo "$image_properties" | awk '{print $2}')
-        hw_scsi_model=$(echo "$image_properties" | awk '{print $3}')
-        os_distro=$(echo "$image_properties" | awk '{print $4}')
-        os_version=$(echo "$image_properties" | awk '{print $5}')
+    echo "Instance Name | Image ID | CPU Arch | Disk Bus | SCSI Model | OS Distro | OS Version | RAM | Disk | VCPUs"
+    echo "---------------------------------------------------------------------------------------------------------"
 
-        flavor_properties=$(openstack flavor show "$instance_flavor" -f json | jq -r '"\(.ram) \(.disk) \(.vcpus)"')
-        flavor_ram=$(echo "$flavor_properties" | awk '{print $1}')
-        flavor_disk=$(echo "$flavor_properties" | awk '{print $2}')
-        flavor_vcpus=$(echo "$flavor_properties" | awk '{print $3}')
-        echo "$instance_name | $image_id | $cpu_arch | $hw_disk_bus | $hw_scsi_model | $os_distro | $os_version | $flavor_ram | $flavor_disk | $flavor_vcpus"
-    else
-        echo "$instance_name |  No Image | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A"
-    fi
-  done <<< "$instance_list"
+    while IFS=" " read -r instance_id instance_name image_id instance_flavor; do
+        if [[ "$image_id" != "" && $instance_flavor != "" ]]; then
+            image_properties=$(openstack image show "$image_id" -f json | jq -r '.properties | "\(.cpu_arch) \(.hw_disk_bus) \(.hw_scsi_model) \(.os_distro) \(.os_version)"')
+
+            cpu_arch=$(echo "$image_properties" | awk '{print $1}')
+            hw_disk_bus=$(echo "$image_properties" | awk '{print $2}')
+            hw_scsi_model=$(echo "$image_properties" | awk '{print $3}')
+            os_distro=$(echo "$image_properties" | awk '{print $4}')
+            os_version=$(echo "$image_properties" | awk '{print $5}')
+
+            flavor_properties=$(openstack flavor show "$instance_flavor" -f json | jq -r '"\(.ram) \(.disk) \(.vcpus)"')
+
+            flavor_ram=$(echo "$flavor_properties" | awk '{print $1}')
+            flavor_disk=$(echo "$flavor_properties" | awk '{print $2}')
+            flavor_vcpus=$(echo "$flavor_properties" | awk '{print $3}')
+
+            echo "$instance_name | $image_id | $cpu_arch | $hw_disk_bus | $hw_scsi_model | $os_distro | $os_version | $flavor_ram | $flavor_disk | $flavor_vcpus"
+        else
+            echo "$instance_name | No Image | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A"
+        fi
+    done <<< "$instance_list"
 }
+
 
 # Display the menu and handle choices
 while true; do
-    # uncomment next line to debug
     clear
+
     echo "❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀"
     echo "❀ The Open Stack Personal Automation and Launch Suite ❀"
     echo "❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀"
@@ -187,83 +196,26 @@ while true; do
     echo "o. Show Current OpenStack Services"
     echo "q. Exit"
     echo "------------------------------------"
-    
-    # Read user input
+
     read -p "Enter your choice [1-9]: " choice
-    
-    # Execute the chosen command
+
     case $choice in
         1)
-            echo "Show info on project $PROJ:"
-            # show_command does not work if project name contains spaces 
-            banner openstack project show \"$PROJECT_ID\"
+            echo "Show info on project $PROJECT_ID:"
+            banner "openstack project show \"$PROJECT_ID\""
             openstack project show "$PROJECT_ID"
             ;;
+
         2)
             echo "Show all projects I'm a member of"
             show_command "openstack project list"
             ;;
+
         3)
-            echo "List servers in project $PROJ:"
+            echo "List servers in project $PROJECT_ID:"
             show_command "openstack server list -f table -c ID -c Name -c Image -c Flavor -c Status"
             ;;
+
         4)
             echo "Show floating IPs"
-            banner "openstack floating ip list"
-            openstack floating ip list -c "Floating IP Address" -c "Fixed IP Address" -c Port
-            ;;
-        5)
-            echo "Show networks"
-            show_command "openstack network list -f table -c ID -c Name"  
-            ;;
-        6)
-            echo "Show public networks"
-            show_command "openstack network list --external"  
-            ;;
-        7)
-            echo "Show Info on Hardware:"
-            show_vm_hardware
-            ;;
-        8)
-            echo "Show available images"
-            show_command "openstack image list"
-            ;;
-        9)
-            echo "Show available flavors, sort by RAM ascending"
-            show_command "openstack flavor list --sort-column RAM --sort-ascending"
-            ;;
-        a) 
-            echo "Show shares"
-            show_command "openstack share list"
-            ;;
-        b) 
-            echo "Show quotas for project $PROJ"
-            show_command "openstack quota show"
-            ;;
-        c)
-            echo "Run your OpenStack command"
-            enter_command 
-            ;;
-        s)
-            echo "Open the OpenStack shell (type exit to return to $(basename $0))"
-            openstack
-            ;;
-        o) 
-            echo "Show current OpenStack services"
-            echo "OpenStack consists of several independent parts, named the OpenStack services"
-            echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
-            show_command "openstack versions show --status CURRENT"
-            ;;
-        q)
-            echo "Exiting..."
-            break
-            ;;
-        *)
-            echo "Invalid option (q to quit)."
-            ;;
-    esac
-    
-    # Wait for the user to press a key before refreshing the menu
-    read -p "Press any key to return to the menu ... " -n1 -s
-done
 
