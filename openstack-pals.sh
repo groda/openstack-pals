@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # the OpenStack Personal Automation and Launch Suite
 
 usage() {
@@ -218,4 +218,76 @@ while true; do
 
         4)
             echo "Show floating IPs"
+            banner "openstack floating ip list"
+            openstack floating ip list -c "Floating IP Address" -c "Fixed IP Address" -c Port
+            ;;
+
+        5)
+            echo "Show networks"
+            show_command "openstack network list -f table -c ID -c Name"
+            ;;
+
+        6)
+            echo "Show public networks"
+            show_command "openstack network list --external"
+            ;;
+
+        7)
+            echo "Show Info on Hardware:"
+            show_vm_hardware
+            ;;
+
+        8)
+            echo "Show available images"
+            show_command "openstack image list"
+            ;;
+
+        9)
+            echo "Show available flavors, sort by RAM ascending"
+            show_command "openstack flavor list --sort-column RAM --sort-ascending"
+            ;;
+
+        a)
+            echo "Show shares"
+            show_command "openstack share list"
+            ;;
+
+        b)
+            echo "Show quotas for project $PROJECT_ID"
+            show_command "openstack quota show"
+            ;;
+
+        c)
+            echo "Run your OpenStack command"
+            enter_command
+            ;;
+
+        s)
+            echo "Opening OpenStack shell..."
+            echo "Cloud: $OS_CLOUD"
+            echo "Project: $PROJECT_ID"
+            echo "Type OpenStack commands without the \"openstack\" prefix (e.g. project list)"
+            echo "Type 'exit' to return to $(basename "$0")"
+            openstack
+            ;;
+
+        o)
+            echo "Show current OpenStack services"
+            echo "OpenStack consists of several independent parts, named the OpenStack services"
+            echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
+            show_command "openstack versions show --status CURRENT"
+            ;;
+
+        q)
+            echo "Exiting..."
+            break
+            ;;
+
+        *)
+            echo "Invalid option (q to quit)."
+            ;;
+    esac
+
+    read -p "Press any key to return to the menu ... " -n1 -s
+done
 
