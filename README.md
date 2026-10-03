@@ -110,14 +110,14 @@ To run in a docker container:
 
 6. Run in container
    ```bash
-   docker run -ti --rm -v ~/.pals:/root/.pals -v ~/.openstack:/root/.openstack openstack-pals
+   docker run -ti --rm -v .:/app openstack-pals
 
-   **Note:** this assumes that your credentials file is saved under ~/.openstack/app-cred-<YOUR_PROJECT>-openrc.sh 
+   **Note:** this assumes that your `clouds.yaml` file is saved in the current directory
    (inside the container /root/.openstack/app-cred-<YOUR_PROJECT>-openrc.sh)
 
 7. Optionally, create an alias
    ```bash
-   alias openstack-pals="docker run -ti --rm -v ~/.pals:/root/.pals -v ~/.openstack:/root/.openstack openstack-pals"
+   alias openstack-pals="docker run -ti --rm -v .:/app openstack-pals"
    ```
    
    and run with:
