@@ -113,11 +113,18 @@ unset $(env | grep "^OS" | awk -F'=' '{print $1}')
 
 export OS_CLOUD=${CLOUDS_LIST[0]}
 
-read -p "Enter your OpenStack cloud (enter to keep default) [$OS_CLOUD]: " NEW_PROJ
+NEW_CLOUD=$(printf '%s\n' "${CLOUDS_LIST[@]}" | fzf \
+    --height=12 \
+    --reverse \
+    --border=none \
+    --no-separator \
+    --info=hidden \
+    --prompt='Select a cloud:' \
+    --pointer='►' \
+    --no-color )
 
-if [ "$NEW_PROJ" != "" ]; then
-    export OS_CLOUD=$NEW_PROJ
-fi
+[[ -n "$NEW_CLOUD" ]] && export OS_CLOUD="$NEW_CLOUD"
+
 
 PROJECT_ID=$(openstack token issue -f value -c project_id 2>/dev/null)
 echo "Project ID from token: $PROJECT_ID"

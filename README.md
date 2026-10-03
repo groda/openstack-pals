@@ -51,9 +51,18 @@ To clone this repository and set up the project locally, follow these steps:
 
 - **yq**
    ```bash
+    export HOMEBREW_NO_AUTO_UPDATE=1 # prevent brew from auto-upgrading
     brew install yq          # macOS
     # or
     sudo apt install yq      # Linux
+    ```
+
+- **fzf**
+   ```bash
+    export HOMEBREW_NO_AUTO_UPDATE=1 # prevent brew from auto-upgrading
+    brew install fzf          # macOS
+    # or
+    sudo apt install fzf      # Linux
     ```
 
 - **bash 4***
