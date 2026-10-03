@@ -174,120 +174,142 @@ show_vm_hardware() {
 
 
 # Display the menu and handle choices
+# One record per item: key|label|handler
+# Handlers are function names. Add, reorder, or delete a line to change the menu.
+menu_items=(
+    "1|Show Info on Project|menu_project_show"
+    "2|Show Projects I'm A Member Of|menu_project_list"
+    "3|Show All Instances|menu_server_list"
+    "4|Show floating IPs|menu_floating_ips"
+    "5|Show networks|menu_networks"
+    "6|Show public networks|menu_public_networks"
+    "7|Show Bare Metal|menu_bare_metal"
+    "8|Show All Images|menu_images"
+    "9|Show All Flavors|menu_flavors"
+    "a|Show Shares|menu_shares"
+    "b|Show Quotas|menu_quotas"
+    "c|Run Your Command|menu_run_command"
+    "s|Open OpenStack Shell|menu_shell"
+    "o|Show Current OpenStack Services|menu_services"
+    "q|Exit|menu_exit"
+)
+
+menu_project_show() {
+    echo "Show info on project $PROJECT_ID:"
+    banner "openstack project show \"$PROJECT_ID\""
+    openstack project show "$PROJECT_ID"
+}
+
+menu_project_list() {
+    echo "Show all projects I'm a member of"
+    show_command "openstack project list"
+}
+
+menu_server_list() {
+    echo "List servers in project $PROJECT_ID:"
+    show_command "openstack server list -f table -c ID -c Name -c Image -c Flavor -c Status"
+}
+
+menu_floating_ips() {
+    echo "Show floating IPs"
+    banner "openstack floating ip list"
+    openstack floating ip list -c "Floating IP Address" -c "Fixed IP Address" -c Port
+}
+
+menu_networks() {
+    echo "Show networks"
+    show_command "openstack network list -f table -c ID -c Name"
+}
+
+menu_public_networks() {
+    echo "Show public networks"
+    show_command "openstack network list --external"
+}
+
+menu_bare_metal() {
+    echo "Show Info on Hardware:"
+    show_vm_hardware
+}
+
+menu_images() {
+    echo "Show available images"
+    show_command "openstack image list"
+}
+
+menu_flavors() {
+    echo "Show available flavors, sort by RAM ascending"
+    show_command "openstack flavor list --sort-column RAM --sort-ascending"
+}
+
+menu_shares() {
+    echo "Show shares"
+    show_command "openstack share list"
+}
+
+menu_quotas() {
+    echo "Show quotas for project $PROJECT_ID"
+    show_command "openstack quota show"
+}
+
+menu_run_command() {
+    echo "Run your OpenStack command"
+    enter_command
+}
+
+menu_shell() {
+    echo "Opening OpenStack shell..."
+    echo "Cloud: $OS_CLOUD"
+    echo "Project: $PROJECT_ID"
+    echo "Type OpenStack commands without the \"openstack\" prefix (e.g. project list)"
+    echo "Type 'exit' to return to $(basename "$0")"
+    openstack
+}
+
+menu_services() {
+    echo "Show current OpenStack services"
+    echo "OpenStack consists of several independent parts, named the OpenStack services"
+    echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
+    show_command "openstack versions show --status CURRENT"
+}
+
+menu_exit() {
+    echo "Exiting..."
+    exit 0
+}
+
+# Lookup handler for a key. Prints the function name, or nothing if unknown.
+menu_lookup() {
+    local key="$1" item item_key
+    for item in "${menu_items[@]}"; do
+        item_key="${item%%|*}"
+        if [[ "$item_key" == "$key" ]]; then
+            echo "${item##*|}"
+            return 0
+        fi
+    done
+    return 1
+}
+
 while true; do
     clear
-
     echo "❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀"
     echo "❀ The Open Stack Personal Automation and Launch Suite ❀"
     echo "❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀"
-    echo "1. Show Info on Project"
-    echo "2. Show Projects I'm A Member Of"
-    echo "3. Show All Instances"
-    echo "4. Show floating IPs"
-    echo "5. Show networks"
-    echo "6. Show public networks"
-    echo "7. Show Bare Metal"
-    echo "8. Show All Images"
-    echo "9. Show All Flavors"
-    echo "a. Show Shares"
-    echo "b. Show Quotas"
-    echo "c. Run Your Command"
-    echo "s. Open OpenStack Shell"
-    echo "o. Show Current OpenStack Services"
-    echo "q. Exit"
+    for item in "${menu_items[@]}"; do
+        key="${item%%|*}"
+        rest="${item#*|}"
+        label="${rest%%|*}"
+        printf "%s. %s\n" "$key" "$label"
+    done
     echo "------------------------------------"
+    read -r -p "Enter your choice: " choice
 
-    read -p "Enter your choice [1-9]: " choice
-
-    case $choice in
-        1)
-            echo "Show info on project $PROJECT_ID:"
-            banner "openstack project show \"$PROJECT_ID\""
-            openstack project show "$PROJECT_ID"
-            ;;
-
-        2)
-            echo "Show all projects I'm a member of"
-            show_command "openstack project list"
-            ;;
-
-        3)
-            echo "List servers in project $PROJECT_ID:"
-            show_command "openstack server list -f table -c ID -c Name -c Image -c Flavor -c Status"
-            ;;
-
-        4)
-            echo "Show floating IPs"
-            banner "openstack floating ip list"
-            openstack floating ip list -c "Floating IP Address" -c "Fixed IP Address" -c Port
-            ;;
-
-        5)
-            echo "Show networks"
-            show_command "openstack network list -f table -c ID -c Name"
-            ;;
-
-        6)
-            echo "Show public networks"
-            show_command "openstack network list --external"
-            ;;
-
-        7)
-            echo "Show Info on Hardware:"
-            show_vm_hardware
-            ;;
-
-        8)
-            echo "Show available images"
-            show_command "openstack image list"
-            ;;
-
-        9)
-            echo "Show available flavors, sort by RAM ascending"
-            show_command "openstack flavor list --sort-column RAM --sort-ascending"
-            ;;
-
-        a)
-            echo "Show shares"
-            show_command "openstack share list"
-            ;;
-
-        b)
-            echo "Show quotas for project $PROJECT_ID"
-            show_command "openstack quota show"
-            ;;
-
-        c)
-            echo "Run your OpenStack command"
-            enter_command
-            ;;
-
-        s)
-            echo "Opening OpenStack shell..."
-            echo "Cloud: $OS_CLOUD"
-            echo "Project: $PROJECT_ID"
-            echo "Type OpenStack commands without the \"openstack\" prefix (e.g. project list)"
-            echo "Type 'exit' to return to $(basename "$0")"
-            openstack
-            ;;
-
-        o)
-            echo "Show current OpenStack services"
-            echo "OpenStack consists of several independent parts, named the OpenStack services"
-            echo "(see [OpenStack: Logical architecture](https://docs.openstack.org/ocata/admin-guide/common/get-started-logical-architecture.html))"
-            show_command "openstack versions show --status CURRENT"
-            ;;
-
-        q)
-            echo "Exiting..."
-            break
-            ;;
-
-        *)
-            echo "Invalid option (q to quit)."
-            ;;
-    esac
-
-    read -p "Press any key to return to the menu ... " -n1 -s
+    if handler=$(menu_lookup "$choice"); then
+        "$handler"
+        [[ "$handler" == "menu_exit" ]] && break
+    else
+        echo "Invalid option (q to quit)."
+    fi
+    read -r -p "Press any key to return to the menu ... " -n1 -s
 done
 
