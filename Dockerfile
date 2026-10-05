@@ -1,7 +1,7 @@
 FROM python:3.12-alpine
 
 # Install bash, build dependencies, and other necessary tools
-RUN apk add --no-cache bash gcc musl-dev python3-dev linux-headers yq
+RUN apk add --no-cache bash gcc musl-dev python3-dev linux-headers yq fzf
 
 # Copy your requirements.txt file to the container
 COPY requirements.txt /app/requirements.txt
