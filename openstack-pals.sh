@@ -23,7 +23,7 @@ You will need to provide the following information:
 ~ ❀ ~
 
 Key features:
-➤ Automatic Virtual Environment Creation: a virtual environment named $HOME/.virtualenvs/pals will be automatically created if it doesn't already exist.
+➤ Automatic Virtual Environment Creation: a virtual environment named \$HOME/.virtualenvs/pals will be automatically created if it doesn't already exist.
 ➤ OpenStack Python Client Installation: if the OpenStack Python client is not already installed, it will be automatically installed within the virtual environment.
 ➤ When specifying the clouds.yaml file path, you can use tab autocompletion and the ~ shortcut for your home directory.
 ➤ Viewing the commands to be executed helps you memorize them.
@@ -38,6 +38,68 @@ check_status() {
     [ $? -eq 0 ] && echo ✅ || { echo ❌; exit; }
 }
 
+# ---------- Auto-install missing tools (best-effort, skip if no curl or already present) ----------
+BIN_DIR="${HOME}/.local/bin"
+mkdir -p "$BIN_DIR"
+export PATH="$BIN_DIR:$PATH"
+
+have_curl() { command -v curl >/dev/null 2>&1; }
+
+ensure_tool() {
+    local tool="$1"
+    if command -v "$tool" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    # Don't try to install if we have no way to download
+    if ! have_curl; then
+        echo "⚠️  $tool not found and curl is unavailable — skipping auto-install"
+        return 1
+    fi
+
+    echo "❀ Missing $tool — attempting to install..."
+    case "$tool" in
+        uv)
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            export PATH="${HOME}/.cargo/bin:${HOME}/.local/bin:$PATH"
+            ;;
+        yq)
+            OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+            ARCH=$(uname -m)
+            case "$ARCH" in
+                x86_64) ARCH=amd64 ;;
+                aarch64|arm64) ARCH=arm64 ;;
+                *) echo "Unsupported arch for yq"; return 1 ;;
+            esac
+            curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_${OS}_${ARCH}" -o "$BIN_DIR/yq"
+            chmod +x "$BIN_DIR/yq"
+            ;;
+        fzf)
+            TMP=$(mktemp -d)
+            if curl -fsSL "https://github.com/junegunn/fzf/releases/latest/download/fzf-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m).tar.gz" -o "$TMP/fzf.tgz" 2>/dev/null; then
+                tar -xzf "$TMP/fzf.tgz" -C "$TMP"
+                cp "$TMP/fzf" "$BIN_DIR/fzf" 2>/dev/null && chmod +x "$BIN_DIR/fzf"
+            fi
+            rm -rf "$TMP"
+            ;;
+    esac
+    command -v "$tool" >/dev/null 2>&1 || {
+        echo "❌ Could not install $tool. Please install it manually."
+        return 1
+    }
+    echo "✅ $tool installed"
+}
+
+# Only require yq and fzf; uv is optional
+ensure_tool yq || { echo "❌ yq is required"; exit 1; }
+ensure_tool fzf || { echo "❌ fzf is required for cloud selection"; exit 1; }
+ensure_tool uv || true   # optional — we fall back to venv/pip
+
+# Bash version check
+if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+    echo "❌ Bash ≥ 4 is required (mapfile). On macOS: brew install bash"
+    exit 1
+fi
 
 echo "❀ Creating environment ..."
 PALS_ENV=pals
@@ -46,21 +108,29 @@ VENV_PATH="$HOME/.virtualenvs/${PALS_ENV}"
 # Create the virtual environment if it doesn't exist
 if [ ! -d "${VENV_PATH}" ] || [ ! -f "${VENV_PATH}/bin/activate" ]; then
     echo "Creating new environment ${PALS_ENV}..."
-    uv venv "${VENV_PATH}" --python 3.11
+    if command -v uv >/dev/null 2>&1; then
+        uv venv "${VENV_PATH}" --python 3.11
+    else
+        python3 -m venv "${VENV_PATH}"
+    fi
 fi
 
 # Activate it
 source "${VENV_PATH}/bin/activate"
 
-# Install requirements
+# Install requirements (prefer uv, fall back to pip)
 echo "❀ Installing requirements ..."
-uv pip install -r requirements.txt -q
+if command -v uv >/dev/null 2>&1; then
+    uv pip install -r requirements.txt -q
+else
+    pip install -r requirements.txt -q
+fi
 
 # Check if openstack command is available
 if ! command -v openstack >/dev/null 2>&1; then
     echo "❌ Error: 'openstack' command not found after installation."
     echo "Please check the requirements.txt or try reinstalling with:"
-    echo "   uv pip install --force-reinstall python-openstackclient"
+    echo "   pip install --force-reinstall python-openstackclient"
     exit 1
 fi
 
@@ -88,14 +158,11 @@ echo "✅ Using clouds.yaml: $CLOUDS_YAML"
 
 
 # Extract cloud names from clouds.yaml using yq
-# Extract cloud names as array (works on older Bash)
 if yq --version 2>&1 | grep -q 'mikefarah/yq'; then
-    # Mike Farah yq v4
     mapfile -t CLOUDS_LIST < <(
         yq e '.clouds | keys | .[]' "$CLOUDS_YAML"
     )
 else
-    # Python yq
     mapfile -t CLOUDS_LIST < <(
         yq '.clouds | keys | .[]' "$CLOUDS_YAML"
     )
@@ -181,8 +248,6 @@ show_vm_hardware() {
 
 
 # Display the menu and handle choices
-# One record per item: key|label|handler
-# Handlers are function names. Add, reorder, or delete a line to change the menu.
 menu_items=(
     "1|Show Info on Project|menu_project_show"
     "2|Show Projects I'm A Member Of|menu_project_list"
@@ -284,7 +349,6 @@ menu_exit() {
     exit 0
 }
 
-# Lookup handler for a key. Prints the function name, or nothing if unknown.
 menu_lookup() {
     local key="$1" item item_key
     for item in "${menu_items[@]}"; do
@@ -319,4 +383,3 @@ while true; do
     fi
     read -r -p "Press any key to return to the menu ... " -n1 -s
 done
-

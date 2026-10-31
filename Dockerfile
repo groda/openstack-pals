@@ -1,18 +1,30 @@
 FROM python:3.12-alpine
 
-# Install bash, build dependencies, and other necessary tools
-RUN apk add --no-cache bash gcc musl-dev python3-dev linux-headers yq fzf
+# Install runtime dependencies
+# - bash ≥ 4 (mapfile)
+# - yq, fzf (required by the script)
+# - curl (optional, only used if the script tries to self-install tools)
+# - build deps in case pip needs to compile anything
+RUN apk add --no-cache \
+    bash \
+    curl \
+    yq \
+    fzf \
+    gcc \
+    musl-dev \
+    python3-dev \
+    linux-headers \
+    jq
 
-# Copy your requirements.txt file to the container
+# Copy requirements and install OpenStack clients system-wide
+# (the script will still create its own venv, but this keeps the image usable)
 COPY requirements.txt /app/requirements.txt
-
-# Install dependencies from requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy your script or application files
-COPY ./openstack-pals.sh /app
+# Copy the script
+COPY openstack-pals.sh /app/openstack-pals.sh
+RUN chmod +x /app/openstack-pals.sh
 
 WORKDIR /app
 
-# Command to execute your script
 CMD ["./openstack-pals.sh"]

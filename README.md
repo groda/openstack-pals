@@ -9,34 +9,31 @@ This project provides a shell script with a menu-driven interface to simplify co
 ❀ The Open Stack Personal Automation and Launch Suite ❀
 ❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀~❀
 1. Show Info on Project
-2. Show Info on User
-3. Show Projects I'm A Member Of
-4. Show All Instances
-5. Show floating IPs
-6. Show networks
+2. Show Projects I'm A Member Of
+3. Show All Instances
+4. Show floating IPs
+5. Show networks
+6. Show public networks
 7. Show Bare Metal
 8. Show All Images
 9. Show All Flavors
 a. Show Shares
 b. Show Quotas
-c. Show Current OpenStack Services
-x. Run Your Command
-y. Open OpenStack Shell
+c. Run Your Command
+s. Open OpenStack Shell
+o. Show Current OpenStack Services
 q. Exit
 ------------------------------------
-Enter your choice [1-9]: 
+Enter your choice: 
 ```
 
 The idea for this project came from my desire to create a shell tool to learn specific shell commands—essentially a self-evolving, learning-based personalized interactive tutorial command (in this case, I wanted to explore the `openstack` CLI command). Although I haven’t implemented that tool yet, this script emerged during the process. Another source of inspiration was the vintage IBM AIX interface for system administration, which I greatly appreciated back in the day.
 
-> [!NOTE]
-> Important Notice:
-> This application mainly operates in **read-only mode**. It is designed as an OpenStack client for inspecting and interacting with your OpenStack environment without making any modifications to your infrastructure.
-> 
-> The only way to modify your OpenStack infrastructure through this app is by opening an OpenStack shell through the "Open OpenStack Shell" menu item and typing your commands.
+## Quick start
 
-## Installation
+### Option A — Docker (easiest, zero host dependencies)
 
+<<<<<<< HEAD
 To clone this repository and set up the project locally, follow these steps:
 
 ### Prerequisites
@@ -88,48 +85,67 @@ To clone this repository and set up the project locally, follow these steps:
 ### Credentials File  
 
 The script requires a **credentials file** for establishing a connection with your OpenStack projecty, by default   
+=======
+>>>>>>> 201f80e (improve install)
 ```bash
-./clouds.yaml
+git clone https://github.com/groda/openstack-pals.git
+cd openstack-pals
+# place your clouds.yaml in this directory
+docker build -t openstack-pals .
+docker run -ti --rm -v .:/app openstack-pals
 ```
 
-The repository includes a sample credentials file `sample_clouds.yaml` with credentials for two different clouds as a reference.
+Optional alias:
 
-If your credentials file is stored elsewhere, the script will prompt you to provide its location during the **initial interactive setup**.  
+```bash
+alias openstack-pals='docker run -ti --rm -v .:/app openstack-pals'
+```
 
-### Run
+### Option B — Local install (one command)
 
-Run with
-   ```bash
-   ./openstack-pals.sh
-   ```
+```bash
+curl -fsSL https://raw.githubusercontent.com/groda/openstack-pals/main/install.sh | bash
+cd openstack-pals
+./openstack-pals.sh
+```
 
-### Show an usage message
+The installer puts `uv`, `yq`, and `fzf` into `~/.local/bin` if they are missing.  
+You still need a `clouds.yaml` file (see `sample_clouds.yaml`).
 
-   ```bash
-   ./openstack-pals.sh -h
-   ```
+On macOS you may also need a newer Bash:
 
+```bash
+brew install bash
+/opt/homebrew/bin/bash openstack-pals.sh
+```
 
-## Run in Docker
+### Option C — Manual
 
-To run in a docker container:
+1. Install prerequisites if missing: `uv`, `yq`, `fzf`, and Bash ≥ 4.
+2. Clone the repo and run `./openstack-pals.sh`.
 
-5. Build an image
-   ```bash
-   docker build -t openstack-pals .
+The script will automatically create a virtual environment and install the OpenStack clients.
 
-6. Run in container
-   ```bash
-   docker run -ti --rm -v .:/app openstack-pals
+## Credentials
 
-   **Note:** this assumes that your `clouds.yaml` file is saved in the current directory
-   (inside the container /root/.openstack/app-cred-<YOUR_PROJECT>-openrc.sh)
+The script requires a **clouds.yaml** file. By default it looks for `./clouds.yaml`.
 
-7. Optionally, create an alias
-   ```bash
-   alias openstack-pals="docker run -ti --rm -v .:/app openstack-pals"
-   ```
-   
-   and run with:
-   ```bash
-   openstack-pals
+A sample file (`sample_clouds.yaml`) is included. You can also use the standard location `~/.config/openstack/clouds.yaml`.
+
+If the file is elsewhere, the script will prompt you for the path on first run.
+
+## Run
+
+```bash
+./openstack-pals.sh
+```
+
+Show usage:
+
+```bash
+./openstack-pals.sh -h
+```
+
+## About
+
+The Open Stack Personal Automation and Launch Suite
