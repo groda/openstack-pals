@@ -65,7 +65,7 @@ To clone this repository and set up the project locally, follow these steps:
     sudo apt install fzf      # Linux
     ```
 
-- **bash 4***
+- **bash 4**
    The `mapfile` command is only available starting from `bash` version 4. Since on macOS has by defult `bash 3`,
    you might need to instal it with
    ```bash
