@@ -33,60 +33,6 @@ The idea for this project came from my desire to create a shell tool to learn sp
 
 ### Option A — Docker (easiest, zero host dependencies)
 
-<<<<<<< HEAD
-To clone this repository and set up the project locally, follow these steps:
-
-### Prerequisites
-
-- **uv** (required) - Fast Python package manager  
-  Install with:
-   ```bash
-   # macOS / Linux
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
-   Note: Restart your terminal or run source $HOME/.cargo/env` to finalize the installation.
-
-- **yq**
-   ```bash
-    export HOMEBREW_NO_AUTO_UPDATE=1 # prevent brew from auto-upgrading
-    brew install yq          # macOS
-    # or
-    sudo apt install yq      # Linux
-    ```
-
-- **fzf**
-   ```bash
-    export HOMEBREW_NO_AUTO_UPDATE=1 # prevent brew from auto-upgrading
-    brew install fzf          # macOS
-    # or
-    sudo apt install fzf      # Linux
-    ```
-
-- **bash 4**
-   The `mapfile` command is only available starting from `bash` version 4. Since on macOS has by defult `bash 3`,
-   you might need to instal it with
-   ```bash
-   # macOS
-   export HOMEBREW_NO_AUTO_UPDATE=1 # prevent brew from auto-upgrading
-   brew install bash         
-   ```
-    (this will install the latest version of `bash`)
-
-### Download
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/groda/openstack-pals.git
-
-2. Navigate into the project directory:
-   ```bash
-   cd openstack-pals
-
-### Credentials File  
-
-The script requires a **credentials file** for establishing a connection with your OpenStack projecty, by default   
-=======
->>>>>>> 201f80e (improve install)
 ```bash
 git clone https://github.com/groda/openstack-pals.git
 cd openstack-pals
